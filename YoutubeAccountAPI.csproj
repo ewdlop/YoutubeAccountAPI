@@ -11,4 +11,10 @@
     <PackageReference Include="Google.Apis.YouTube.v3" Version="1.68.0.3421" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="client_secret_282960065585-03sgbbvgl82eh5e2td7q5jqikhf6g0vb.apps.googleusercontent.com.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
