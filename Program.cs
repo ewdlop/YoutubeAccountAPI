@@ -89,8 +89,8 @@ string? apiKey = Console.ReadLine();
             GoogleClientSecrets.FromStream(stream).Secrets,
             scopes,
             "user",
-            CancellationToken.None/*,
-            new FileDataStore("localstore",false)*/);
+            CancellationToken.None,
+            new FileDataStore("localstore",false));
     }
 
     //Create the YouTube service
@@ -126,8 +126,10 @@ string? apiKey = Console.ReadLine();
 
     // Fetch YouTube videos
     var searchRequest = youtubeService.Search.List("snippet");
-    searchRequest.Q = "AI"; // Replace with your search query
-    searchRequest.MaxResults = 10;
+
+    Console.WriteLine("Enter the search query:");
+    searchRequest.Q = Console.ReadLine(); // Replace with your search query
+    searchRequest.MaxResults = 50;
 
     var searchResponse = await searchRequest.ExecuteAsync();
     List<string> videoIds = new List<string>();
