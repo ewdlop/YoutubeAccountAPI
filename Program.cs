@@ -149,12 +149,16 @@ string? apiKey = Console.ReadLine();
         }
     }
 
+    Console.WriteLine("Enter the title and description for the playlist:");
+    string? title = Console.ReadLine();
+    string? description = Console.ReadLine();
+
     // Create a new playlist
     var newPlaylist = new Playlist();
     newPlaylist.Snippet = new PlaylistSnippet
     {
-        Title = "Test Code Generated Playlist",
-        Description = "A playlist created with the YouTube API"
+        Title = title,
+        Description = description
     };
     newPlaylist.Status = new PlaylistStatus
     {
