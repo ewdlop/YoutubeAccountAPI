@@ -3,226 +3,285 @@ using Google.Apis.Services;
 using Google.Apis.Util.Store;
 using Google.Apis.YouTube.v3;
 using Google.Apis.YouTube.v3.Data;
+#if WINDOWS
+using System.Runtime.InteropServices;
+#endif
 using static Google.Apis.YouTube.v3.ChannelsResource;
 
 
-Console.WriteLine("Please enter the API Key:");
-string? apiKey = Console.ReadLine();
-string[] scopes = { YouTubeService.Scope.Youtube };
 
-// Load or request authorization
-UserCredential credential;
-using (var stream = new FileStream("client_secret_282960065585-03sgbbvgl82eh5e2td7q5jqikhf6g0vb.apps.googleusercontent.com.json", FileMode.Open, FileAccess.Read))
+//swap targeting os on csjproj to windows in order meet this condition (right clicking and go to property then in the dropdown swap platform)
+//Windows Only Functionality
+#if WINDOWS
+class Program
 {
-    credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-        GoogleClientSecrets.FromStream(stream).Secrets,
-        scopes,
-        "user",
-        CancellationToken.None,
-        new FileDataStore("localstore", false));
-}
-
-//Create the YouTube service
-YouTubeService? youtubeService = new YouTubeService(new BaseClientService.Initializer()
-{
-    HttpClientInitializer = credential,
-    ApplicationName = "YouTubeAPIExample"
-});
-{
-    //// Create the service
-    //YouTubeService youtubeService = new YouTubeService(new BaseClientService.Initializer()
-    //{
-    //    ApiKey = apiKey,
-    //    ApplicationName = "YouTubeAPIExample"
-    //});
-
-    
-    //try
-    //{
-    //    // Call the API
-    //    ListRequest channelRequest = youtubeService.Channels.List("snippet,contentDetails,statistics");
-    //    Console.WriteLine("Enter the username:");
-    //    channelRequest.ForUsername = Console.ReadLine();
-
-    //    ChannelListResponse? channelResponse = await channelRequest.ExecuteAsync();
-
-    //    foreach (var channel in channelResponse.Items)
-    //    {
-    //        Console.WriteLine($"Title: {channel.Snippet.Title}");
-    //        Console.WriteLine($"Description: {channel.Snippet.Description}");
-    //        Console.WriteLine($"View Count: {channel.Statistics.ViewCount}");
-    //        Console.WriteLine($"Subscriber Count: {channel.Statistics.SubscriberCount}");
-    //        Console.WriteLine($"Video Count: {channel.Statistics.VideoCount}");
-    //    }
-
-    //    Console.WriteLine();
-    //}
-    //catch(Exception ex)
-    //{
-    //    Console.WriteLine(ex.Message);
-    //    Console.WriteLine(ex.InnerException?.Message);
-    //}
-}
-
-
-{
-    // Create the service
-    //YouTubeService youtubeService = new YouTubeService(new BaseClientService.Initializer()
-    //{
-    //    ApiKey = apiKey,
-    //    ApplicationName = "YouTubeAPIExample"
-    //});
-
-    //// Call the API
-    //SearchResource.ListRequest searchRequest = youtubeService.Search.List("snippet");
-    //searchRequest.Q = "ai"; // Replace with your search query
-    //searchRequest.MaxResults = 10;
-
-    //var searchResponse = await searchRequest.ExecuteAsync();
-
-    //foreach (var searchResult in searchResponse.Items)
-    //{
-    //    if (searchResult.Id.Kind == "youtube#video")
-    //    {
-    //        Console.WriteLine($"Title: {searchResult.Snippet.Title}");
-    //        Console.WriteLine($"Description: {searchResult.Snippet.Description}");
-    //        Console.WriteLine($"Video ID: {searchResult.Id.VideoId}");
-    //        Console.WriteLine($"Thumbnail: {searchResult.Snippet.Thumbnails.High.Url}");
-    //        Console.WriteLine($"Video URL: https://www.youtube.com/watch?v={searchResult.Id.VideoId}");
-
-    //        Console.WriteLine();
-    //    }
-    //}
-}
-{
-
-
-
-    ListRequest channelRequest = youtubeService.Channels.List("snippet,contentDetails,statistics");
-    Console.WriteLine("Please Enter the username:");
-    channelRequest.ForUsername = Console.ReadLine();
-
-    ChannelListResponse? channelResponse = await channelRequest.ExecuteAsync();
-
-    foreach (var channel in channelResponse.Items)
+    [STAThread]
+    static void Main(string[] args)
     {
-        Console.WriteLine($"Title: {channel.Snippet.Title}");
-        Console.WriteLine($"Description: {channel.Snippet.Description}");
-        Console.WriteLine($"View Count: {channel.Statistics.ViewCount}");
-        Console.WriteLine($"Subscriber Count: {channel.Statistics.SubscriberCount}");
-        Console.WriteLine($"Video Count: {channel.Statistics.VideoCount}");
+
+        string clientSecretJsonFilePath = ShowOpenFileDialog();
+        APIHelper.RunAPIAsync(clientSecretJsonFilePath).GetAwaiter().GetResult();
+
     }
 
-    Console.WriteLine();
-
-    //YouTubeService youtubeService = new YouTubeService(new BaseClientService.Initializer()
-    //{
-    //    ApiKey = apiKey,
-    //    ApplicationName = "YouTubeAPIExample",
-    //});
-
-    // Fetch YouTube videos
-    var searchRequest = youtubeService.Search.List("snippet");
-
-    Console.WriteLine("Please Enter the search query:");
-    searchRequest.Q = Console.ReadLine(); // Replace with your search query
-    searchRequest.MaxResults = 50;
-    searchRequest.Type = "short";
-
-    var searchResponse = await searchRequest.ExecuteAsync();
-    List<string> videoIds = new List<string>();
-
-    foreach (var searchResult in searchResponse.Items)
+    static string ShowOpenFileDialog()
     {
-        if (searchResult.Id.Kind == "youtube#video")
+        using (OpenFileDialog openFileDialog = new OpenFileDialog())
         {
-            videoIds.Add(searchResult.Id.VideoId);
-            Console.WriteLine($"Title: {searchResult.Snippet.Title}");
-            Console.WriteLine($"Description: {searchResult.Snippet.Description}");
-            Console.WriteLine($"Video ID: {searchResult.Id.VideoId}");
-            Console.WriteLine($"Thumbnail: {searchResult.Snippet.Thumbnails.High.Url}");
-            Console.WriteLine($"Video URL: https://www.youtube.com/watch?v={searchResult.Id.VideoId}");
+            openFileDialog.Filter = "All files (*.*)|*.*|Text files (*.txt)|*.txt";
+            openFileDialog.FilterIndex = 1;
+            openFileDialog.RestoreDirectory = true;
+
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                return openFileDialog.FileName;
+            }
+
+            return string.Empty;
+        }
+    }
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    static extern int MessageBox(IntPtr hWnd, String text, String caption, uint type);
+
+    static void ShowMessageBox(string message)
+    {
+        MessageBox(IntPtr.Zero, message, "Message", 0);
+    }
+}
+#else
+{
+    Console.WriteLine("Please enter Client Secret Json FilePath: ");
+    clientSecretJsonFilePath  = Console.ReadLine();
+}
+#endif
+
+
+static class APIHelper
+{
+    public static async Task RunAPIAsync(string clientSecretJsonFilePath)
+    {
+        string[] scopes = { YouTubeService.Scope.Youtube };
+        // Load or request authorization
+        UserCredential credential;
+        using (var stream = new FileStream(clientSecretJsonFilePath, FileMode.Open, FileAccess.Read))
+        {
+            credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
+                GoogleClientSecrets.FromStream(stream).Secrets,
+                scopes,
+                "user",
+                CancellationToken.None,
+                new FileDataStore("localstore", false));
+        }
+
+        //Create the YouTube service
+        YouTubeService? youtubeService = new YouTubeService(new BaseClientService.Initializer()
+        {
+            HttpClientInitializer = credential,
+            ApplicationName = "YouTubeAPIExample"
+        });
+        {
+
+
+            //Console.WriteLine("Please enter the API Key:");
+            //string? apiKey = Console.ReadLine();
+
+
+
+            //// Create the service
+            //YouTubeService youtubeService = new YouTubeService(new BaseClientService.Initializer()
+            //{
+            //    ApiKey = apiKey,
+            //    ApplicationName = "YouTubeAPIExample"
+            //});
+
+
+            //try
+            //{
+            //    // Call the API
+            //    ListRequest channelRequest = youtubeService.Channels.List("snippet,contentDetails,statistics");
+            //    Console.WriteLine("Enter the username:");
+            //    channelRequest.ForUsername = Console.ReadLine();
+
+            //    ChannelListResponse? channelResponse = await channelRequest.ExecuteAsync();
+
+            //    foreach (var channel in channelResponse.Items)
+            //    {
+            //        Console.WriteLine($"Title: {channel.Snippet.Title}");
+            //        Console.WriteLine($"Description: {channel.Snippet.Description}");
+            //        Console.WriteLine($"View Count: {channel.Statistics.ViewCount}");
+            //        Console.WriteLine($"Subscriber Count: {channel.Statistics.SubscriberCount}");
+            //        Console.WriteLine($"Video Count: {channel.Statistics.VideoCount}");
+            //    }
+
+            //    Console.WriteLine();
+            //}
+            //catch(Exception ex)
+            //{
+            //    Console.WriteLine(ex.Message);
+            //    Console.WriteLine(ex.InnerException?.Message);
+            //}
+        }
+
+
+        {
+            // Create the service
+            //YouTubeService youtubeService = new YouTubeService(new BaseClientService.Initializer()
+            //{
+            //    ApiKey = apiKey,
+            //    ApplicationName = "YouTubeAPIExample"
+            //});
+
+            //// Call the API
+            //SearchResource.ListRequest searchRequest = youtubeService.Search.List("snippet");
+            //searchRequest.Q = "ai"; // Replace with your search query
+            //searchRequest.MaxResults = 10;
+
+            //var searchResponse = await searchRequest.ExecuteAsync();
+
+            //foreach (var searchResult in searchResponse.Items)
+            //{
+            //    if (searchResult.Id.Kind == "youtube#video")
+            //    {
+            //        Console.WriteLine($"Title: {searchResult.Snippet.Title}");
+            //        Console.WriteLine($"Description: {searchResult.Snippet.Description}");
+            //        Console.WriteLine($"Video ID: {searchResult.Id.VideoId}");
+            //        Console.WriteLine($"Thumbnail: {searchResult.Snippet.Thumbnails.High.Url}");
+            //        Console.WriteLine($"Video URL: https://www.youtube.com/watch?v={searchResult.Id.VideoId}");
+
+            //        Console.WriteLine();
+            //    }
+            //}
+        }
+        {
+
+            ListRequest channelRequest = youtubeService.Channels.List("snippet,contentDetails,statistics");
+            Console.WriteLine("Please Enter the username:");
+            channelRequest.ForUsername = Console.ReadLine();
+
+            ChannelListResponse? channelResponse = await channelRequest.ExecuteAsync();
+
+            foreach (var channel in channelResponse.Items)
+            {
+                Console.WriteLine($"Title: {channel.Snippet.Title}");
+                Console.WriteLine($"Description: {channel.Snippet.Description}");
+                Console.WriteLine($"View Count: {channel.Statistics.ViewCount}");
+                Console.WriteLine($"Subscriber Count: {channel.Statistics.SubscriberCount}");
+                Console.WriteLine($"Video Count: {channel.Statistics.VideoCount}");
+            }
 
             Console.WriteLine();
-        }
-    }
 
-    Console.WriteLine("Please Enter the title and description for the playlist:");
-    string? title = Console.ReadLine();
-    string? description = Console.ReadLine();
+            //YouTubeService youtubeService = new YouTubeService(new BaseClientService.Initializer()
+            //{
+            //    ApiKey = apiKey,
+            //    ApplicationName = "YouTubeAPIExample",
+            //});
 
-    // Create a new playlist
-    var newPlaylist = new Playlist();
-    newPlaylist.Snippet = new PlaylistSnippet
-    {
-        Title = title,
-        Description = description
-    };
-    newPlaylist.Status = new PlaylistStatus
-    {
-        PrivacyStatus = "Private"
-    };
+            // Fetch YouTube videos
+            var searchRequest = youtubeService.Search.List("snippet");
 
-    var playlistInsertRequest = youtubeService.Playlists.Insert(newPlaylist, "snippet,status");
-    try
-    {
+            Console.WriteLine("Please Enter the search query:");
+            searchRequest.Q = Console.ReadLine(); // Replace with your search query
+            searchRequest.MaxResults = 50;
+            searchRequest.Type = "short";
 
-        var playlistInsertResponse = await playlistInsertRequest.ExecuteAsync();
-        string playlistId = playlistInsertResponse.Id;
+            var searchResponse = await searchRequest.ExecuteAsync();
+            List<string> videoIds = new List<string>();
 
-        // Add videos to the playlist
-        foreach (string videoId in videoIds)
-        {
-            var newPlaylistItem = new PlaylistItem();
-            newPlaylistItem.Snippet = new PlaylistItemSnippet
+            foreach (var searchResult in searchResponse.Items)
             {
-                PlaylistId = playlistId,
-                ResourceId = new ResourceId
+                if (searchResult.Id.Kind == "youtube#video")
                 {
-                    Kind = "youtube#video",
-                    VideoId = videoId
+                    videoIds.Add(searchResult.Id.VideoId);
+                    Console.WriteLine($"Title: {searchResult.Snippet.Title}");
+                    Console.WriteLine($"Description: {searchResult.Snippet.Description}");
+                    Console.WriteLine($"Video ID: {searchResult.Id.VideoId}");
+                    Console.WriteLine($"Thumbnail: {searchResult.Snippet.Thumbnails.High.Url}");
+                    Console.WriteLine($"Video URL: https://www.youtube.com/watch?v={searchResult.Id.VideoId}");
+
+                    Console.WriteLine();
                 }
+            }
+
+            Console.WriteLine("Please Enter the title and description for the playlist:");
+            string? title = Console.ReadLine();
+            string? description = Console.ReadLine();
+
+            // Create a new playlist
+            var newPlaylist = new Playlist();
+            newPlaylist.Snippet = new PlaylistSnippet
+            {
+                Title = title,
+                Description = description
             };
-            Console.WriteLine($"Adding video with ID: {videoId} to the playlist...");
-            var playlistItemInsertRequest = youtubeService.PlaylistItems.Insert(newPlaylistItem, "snippet");
-            await playlistItemInsertRequest.ExecuteAsync();
+            newPlaylist.Status = new PlaylistStatus
+            {
+                PrivacyStatus = "Private"
+            };
+
+            var playlistInsertRequest = youtubeService.Playlists.Insert(newPlaylist, "snippet,status");
+            try
+            {
+
+                var playlistInsertResponse = await playlistInsertRequest.ExecuteAsync();
+                string playlistId = playlistInsertResponse.Id;
+
+                // Add videos to the playlist
+                foreach (string videoId in videoIds)
+                {
+                    var newPlaylistItem = new PlaylistItem();
+                    newPlaylistItem.Snippet = new PlaylistItemSnippet
+                    {
+                        PlaylistId = playlistId,
+                        ResourceId = new ResourceId
+                        {
+                            Kind = "youtube#video",
+                            VideoId = videoId
+                        }
+                    };
+                    Console.WriteLine($"Adding video with ID: {videoId} to the playlist...");
+                    var playlistItemInsertRequest = youtubeService.PlaylistItems.Insert(newPlaylistItem, "snippet");
+                    await playlistItemInsertRequest.ExecuteAsync();
+                }
+
+                Console.WriteLine("Playlist created and videos added successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+
         }
+        //{
+        //    // Get the uploads playlist ID
+        //    Console.WriteLine("Please Enter the channel ID:");
+        //    var channelRequest = youtubeService.Channels.List("contentDetails");
+        //    channelRequest.Id = Console.ReadLine();
+        //    var channelResponse = await channelRequest.ExecuteAsync();
 
-        Console.WriteLine("Playlist created and videos added successfully.");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine(ex.Message);
-    }
+        //    var uploadsPlaylistId = channelResponse.Items[0].ContentDetails.RelatedPlaylists.Uploads;
 
-    
-}
-{
-    // Get the uploads playlist ID
-    Console.WriteLine("Please Enter the channel ID:");
-    var channelRequest = youtubeService.Channels.List("contentDetails");
-    channelRequest.Id = Console.ReadLine();
-    var channelResponse = await channelRequest.ExecuteAsync();
+        //    // Get the videos in the uploads playlist
+        //    var playlistRequest = youtubeService.PlaylistItems.List("snippet");
+        //    playlistRequest.PlaylistId = uploadsPlaylistId;
+        //    playlistRequest.MaxResults = 50;
 
-    var uploadsPlaylistId = channelResponse.Items[0].ContentDetails.RelatedPlaylists.Uploads;
+        //    var playlistResponse = await playlistRequest.ExecuteAsync();
 
-    // Get the videos in the uploads playlist
-    var playlistRequest = youtubeService.PlaylistItems.List("snippet");
-    playlistRequest.PlaylistId = uploadsPlaylistId;
-    playlistRequest.MaxResults = 50;
+        //    List<string> videoIds = new List<string>();
 
-    var playlistResponse = await playlistRequest.ExecuteAsync();
+        //    foreach (var playlistItem in playlistResponse.Items)
+        //    {
+        //        videoIds.Add(playlistItem.Snippet.ResourceId.VideoId);
+        //    }
 
-    List<string> videoIds = new List<string>();
+        //    // Print the video IDs
+        //    foreach (var videoId in videoIds)
+        //    {
+        //        Console.WriteLine(videoId);
+        //    }
+        //}
 
-    foreach (var playlistItem in playlistResponse.Items)
-    {
-        videoIds.Add(playlistItem.Snippet.ResourceId.VideoId);
-    }
-
-    // Print the video IDs
-    foreach (var videoId in videoIds)
-    {
-        Console.WriteLine(videoId);
     }
 }
