@@ -201,11 +201,17 @@ static class APIHelper
 
                     Console.WriteLine();
                 }
+                else
+                {
+                    Console.WriteLine(searchResult.Id.Kind);
+                }
             }
 
             Console.WriteLine("Please Enter the title and description for the playlist:");
             string? title = Console.ReadLine();
             string? description = Console.ReadLine();
+
+            Console.WriteLine("Creating a new playlist...");
 
             // Create a new playlist
             var newPlaylist = new Playlist();
@@ -214,9 +220,20 @@ static class APIHelper
                 Title = title,
                 Description = description
             };
+
+            Console.WriteLine("Please Enter the privacy status for the playlist (public, private, or unlisted):");
+
+            string? privacyStatus = Console.ReadLine();
+
+            if(privacyStatus is null)
+            {
+                Console.WriteLine("Defaulting to public...");
+                privacyStatus = "public";
+            }
+
             newPlaylist.Status = new PlaylistStatus
             {
-                PrivacyStatus = "Private"
+                PrivacyStatus = privacyStatus
             };
 
             var playlistInsertRequest = youtubeService.Playlists.Insert(newPlaylist, "snippet,status");
