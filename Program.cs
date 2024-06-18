@@ -5,6 +5,8 @@ using Google.Apis.YouTube.v3;
 using Google.Apis.YouTube.v3.Data;
 #if WINDOWS
 using System.Runtime.InteropServices;
+using System.Text;
+
 #endif
 using static Google.Apis.YouTube.v3.ChannelsResource;
 
