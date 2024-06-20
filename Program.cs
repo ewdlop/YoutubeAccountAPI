@@ -185,8 +185,20 @@ static class APIHelper
 
             Console.WriteLine("Please Enter the search query:");
             searchRequest.Q = Console.ReadLine(); // Replace with your search query
-            searchRequest.MaxResults = 50;
-            searchRequest.Type = "short";
+
+            Console.WriteLine("Live or Upcoming? (live or upcoming):");
+            Console.WriteLine("Press enter to skip:");
+
+            searchRequest.EventType = Console.ReadLine() switch
+            {
+                "live" => SearchResource.ListRequest.EventTypeEnum.Live,
+                "upcoming" => SearchResource.ListRequest.EventTypeEnum.Upcoming,
+                _ => null
+            };
+
+
+            Console.WriteLine("Please enter the max results:");
+            searchRequest.MaxResults = int.Parse(Console.ReadLine());
 
             var searchResponse = await searchRequest.ExecuteAsync();
             List<string> videoIds = new List<string>();
@@ -210,41 +222,81 @@ static class APIHelper
                 }
             }
 
-            Console.WriteLine("Please Enter the title and description for the playlist:");
-            string? title = Console.ReadLine();
-            string? description = Console.ReadLine();
+            Console.WriteLine("Would you like to create a playlist with these videos? (yes or no):");
+            string? createPlaylist = Console.ReadLine();
 
-            Console.WriteLine("Creating a new playlist...");
-
-            // Create a new playlist
-            var newPlaylist = new Playlist();
-            newPlaylist.Snippet = new PlaylistSnippet
+            string playlistId = "";
+            if (createPlaylist == "yes")
             {
-                Title = title,
-                Description = description
-            };
+                Console.WriteLine("Please Enter the title and description for the playlist:");
+                string? title = Console.ReadLine();
+                string? description = Console.ReadLine();
 
-            Console.WriteLine("Please Enter the privacy status for the playlist (public, private, or unlisted):");
+                Console.WriteLine("Creating a new playlist...");
 
-            string? privacyStatus = Console.ReadLine();
+                // Create a new playlist
 
-            if(privacyStatus is null)
-            {
-                Console.WriteLine("Defaulting to public...");
-                privacyStatus = "public";
+                Playlist newplaylist = new Playlist();
+                newplaylist.Snippet = new PlaylistSnippet
+                {
+                    Title = title,
+                    Description = description
+                };
+
+                Console.WriteLine("Please Enter the privacy status for the newplaylist (public, private, or unlisted):");
+
+                string? privacyStatus = Console.ReadLine();
+
+                if (privacyStatus is null)
+                {
+                    Console.WriteLine("Defaulting to public...");
+                    privacyStatus = "public";
+                }
+
+                newplaylist.Status = new PlaylistStatus
+                {
+                    PrivacyStatus = privacyStatus
+                };
+
+                var newplaylistInsertRequest = youtubeService.Playlists.Insert(newplaylist, "snippet,status");
+
+                var playlistInsertResponse = await newplaylistInsertRequest.ExecuteAsync();
+
+                playlistId = playlistInsertResponse.Id;
             }
-
-            newPlaylist.Status = new PlaylistStatus
+            else if(createPlaylist == "no")
             {
-                PrivacyStatus = privacyStatus
-            };
+                //need bug fix
+                var searchListRequest = youtubeService.Search.List("snippet");
+                Console.WriteLine("Please enter the name of the playlist to search for:");
+                string? playlistName = Console.ReadLine();
+                searchListRequest.Q = playlistName; // The name of the playlist to search for
+                searchListRequest.Type = "playlist";
+                searchListRequest.MaxResults = 10;
+                Console.WriteLine("Press enter to fetch your playlist:");
+                searchListRequest.ForMine = true;
+                // Execute the search request
+                var searchListResponse = await searchListRequest.ExecuteAsync();
 
-            var playlistInsertRequest = youtubeService.Playlists.Insert(newPlaylist, "snippet,status");
+                foreach (var searchResult in searchListResponse.Items)
+                {
+                    if (searchResult.Snippet.Title.Equals(playlistName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine("Playlist found.");
+                        playlistId = searchResult.Id.PlaylistId;
+                        Console.WriteLine($"Playlist ID: {searchResult.Id.PlaylistId}");
+                        Console.WriteLine($"Playlist Title: {searchResult.Snippet.Title}");
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("Invalid input.");
+                return;
+            }
             try
             {
-
-                var playlistInsertResponse = await playlistInsertRequest.ExecuteAsync();
-                string playlistId = playlistInsertResponse.Id;
 
                 // Add videos to the playlist
                 foreach (string videoId in videoIds)
