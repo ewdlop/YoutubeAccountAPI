@@ -27,11 +27,11 @@ class Program
 
     }
 
-    static string ShowOpenFileDialog()
+    static string ShowOpenFileDialog(string? filter = null)
     {
         using (OpenFileDialog openFileDialog = new OpenFileDialog())
         {
-            openFileDialog.Filter = "All files (*.*)|*.*|Text files (*.txt)|*.txt";
+            openFileDialog.Filter = filter ??"All files (*.*)|*.*|Text files (*.txt)|*.txt";
             openFileDialog.FilterIndex = 1;
             openFileDialog.RestoreDirectory = true;
 
@@ -198,12 +198,12 @@ static class APIHelper
 
 
             Console.WriteLine("Please enter the max results:");
-            searchRequest.MaxResults = int.Parse(Console.ReadLine());
+            searchRequest.MaxResults = int.TryParse(Console.ReadLine(), out int result) ? result : 1;
 
-            var searchResponse = await searchRequest.ExecuteAsync();
-            List<string> videoIds = new List<string>();
+            SearchListResponse searchResponse = await searchRequest.ExecuteAsync();
+            List<string> videoIds = new List<string>(searchResponse.Items.Count);
 
-            foreach (var searchResult in searchResponse.Items)
+            foreach (SearchResult searchResult in searchResponse.Items)
             {
                 if (searchResult.Id.Kind == "youtube#video")
                 {
