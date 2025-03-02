@@ -7,10 +7,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Google.Apis.YouTube.v3" Version="1.69.0.3680" />
-  </ItemGroup>
-
   <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-windows'">
       <DefineConstants>WINDOWS</DefineConstants>
 	  <UseWindowsForms>true</UseWindowsForms>
