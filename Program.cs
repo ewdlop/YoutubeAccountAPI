@@ -3,6 +3,8 @@ using Google.Apis.Services;
 using Google.Apis.Util.Store;
 using Google.Apis.YouTube.v3;
 using Google.Apis.YouTube.v3.Data;
+using System.Globalization;
+
 #if WINDOWS
 using System.Runtime.InteropServices;
 using System.Text;
@@ -161,17 +163,26 @@ static class APIHelper
             Console.WriteLine("Please Enter the username:");
             channelRequest.ForUsername = Console.ReadLine();
 
-            ChannelListResponse? channelResponse = await channelRequest.ExecuteAsync();
-
-            foreach (var channel in channelResponse.Items)
+            try
             {
-                Console.WriteLine($"Title: {channel.Snippet.Title}");
-                Console.WriteLine($"Description: {channel.Snippet.Description}");
-                Console.WriteLine($"View Count: {channel.Statistics.ViewCount}");
-                Console.WriteLine($"Subscriber Count: {channel.Statistics.SubscriberCount}");
-                Console.WriteLine($"Video Count: {channel.Statistics.VideoCount}");
-            }
+                ChannelListResponse? channelResponse = await channelRequest.ExecuteAsync();
 
+                foreach (var channel in channelResponse.Items)
+                {
+                    Console.WriteLine($"Title: {channel.Snippet.Title}");
+                    Console.WriteLine($"Description: {channel.Snippet.Description}");
+                    Console.WriteLine($"View Count: {channel.Statistics.ViewCount}");
+                    Console.WriteLine($"Subscriber Count: {channel.Statistics.SubscriberCount}");
+                    Console.WriteLine($"Video Count: {channel.Statistics.VideoCount}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.InnerException?.Message);
+                Console.ReadKey();
+                return;
+            }
             Console.WriteLine();
 
             //YouTubeService youtubeService = new YouTubeService(new BaseClientService.Initializer()
@@ -189,25 +200,26 @@ static class APIHelper
             Console.WriteLine("Live or Upcoming? (live or upcoming):");
             Console.WriteLine("Press enter to skip:");
 
-            searchRequest.EventType = Console.ReadLine() switch
+            searchRequest.EventType = Console.ReadLine()?.ToLower() switch
             {
                 "live" => SearchResource.ListRequest.EventTypeEnum.Live,
                 "upcoming" => SearchResource.ListRequest.EventTypeEnum.Upcoming,
                 _ => null
             };
-
+        
 
             Console.WriteLine("Please enter the max results:");
-            searchRequest.MaxResults = int.TryParse(Console.ReadLine(), out int result) ? result : 1;
+            Console.WriteLine("Press enter to skip:");
+            searchRequest.MaxResults = Int64.TryParse(Console.ReadLine(), out Int64 result) ? result : 1;
 
             SearchListResponse searchResponse = await searchRequest.ExecuteAsync();
-            List<string> videoIds = new List<string>(searchResponse.Items.Count);
+            List<(string id,string description)> videoIds = new List<(string id,string description)>(searchResponse.Items.Count);
 
             foreach (SearchResult searchResult in searchResponse.Items)
             {
                 if (searchResult.Id.Kind == "youtube#video")
                 {
-                    videoIds.Add(searchResult.Id.VideoId);
+                    videoIds.Add((searchResult.Id.VideoId, searchResult.Snippet.Description));
                     Console.WriteLine($"Title: {searchResult.Snippet.Title}");
                     Console.WriteLine($"Description: {searchResult.Snippet.Description}");
                     Console.WriteLine($"Video ID: {searchResult.Id.VideoId}");
@@ -299,7 +311,7 @@ static class APIHelper
             {
 
                 // Add videos to the playlist
-                foreach (string videoId in videoIds)
+                foreach ((string id, string description) videoId in videoIds)
                 {
                     var newPlaylistItem = new PlaylistItem();
                     newPlaylistItem.Snippet = new PlaylistItemSnippet
@@ -308,8 +320,9 @@ static class APIHelper
                         ResourceId = new ResourceId
                         {
                             Kind = "youtube#video",
-                            VideoId = videoId
-                        }
+                            VideoId = videoId.id
+                        },
+                        Description = videoId.description
                     };
                     Console.WriteLine($"Adding video with ID: {videoId} to the playlist...");
                     var playlistItemInsertRequest = youtubeService.PlaylistItems.Insert(newPlaylistItem, "snippet");
