@@ -65,7 +65,7 @@ static class APIHelper
 {
     public static async Task RunAPIAsync(string clientSecretJsonFilePath)
     {
-        string[] scopes = { YouTubeService.Scope.Youtube };
+        string[] scopes =[ YouTubeService.Scope.Youtube ];
         // Load or request authorization
         UserCredential credential;
         using (var stream = new FileStream(clientSecretJsonFilePath, FileMode.Open, FileAccess.Read))
