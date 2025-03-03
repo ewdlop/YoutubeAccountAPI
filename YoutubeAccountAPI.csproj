@@ -14,5 +14,8 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0-windows'">
       <PackageReference Include="Microsoft.Windows.Compatibility" Version="9.0.2" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Google.Apis.YouTube.v3" Version="1.69.0.3707" />
+  </ItemGroup>
 
 </Project>
