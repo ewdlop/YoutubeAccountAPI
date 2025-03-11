@@ -210,7 +210,7 @@ static class APIHelper
 
             Console.WriteLine("Please enter the max results:");
             Console.WriteLine("Press enter to skip:");
-            searchRequest.MaxResults = Int64.TryParse(Console.ReadLine(), out Int64 result) ? result : 1;
+            searchRequest.MaxResults = Int64.TryParse(Console.ReadLine(), out Int64 result) ? result : Random.Shared.NextInt64(0, Int64.MaxValue);
 
             SearchListResponse searchResponse = await searchRequest.ExecuteAsync();
             List<(string id,string description)> videoIds = new List<(string id,string description)>(searchResponse.Items.Count);
