@@ -3,6 +3,7 @@ using Google.Apis.Services;
 using Google.Apis.Util.Store;
 using Google.Apis.YouTube.v3;
 using Google.Apis.YouTube.v3.Data;
+using System.Buffers.Text;
 using System.Globalization;
 
 #if WINDOWS
@@ -246,13 +247,18 @@ static class APIHelper
 
                 Console.WriteLine("Creating a new playlist...");
 
+                Console.WriteLine("Please enter a tag...");
+                string? tag = Console.ReadLine();
+
                 // Create a new playlist
 
                 Playlist newplaylist = new Playlist();
+
                 newplaylist.Snippet = new PlaylistSnippet
                 {
                     Title = title,
-                    Description = description
+                    Description = description,
+                    Tags = [tag, YouTubeService.Version, typeof(YouTubeService).Assembly.GetHashCode().ToString()],
                 };
 
                 Console.WriteLine("Please Enter the privacy status for the newplaylist (public, private, or unlisted):");
@@ -322,7 +328,7 @@ static class APIHelper
                             Kind = "youtube#video",
                             VideoId = videoId.id
                         },
-                        Description = videoId.description
+                        Description = videoId.description,
                     };
                     Console.WriteLine($"Adding video with ID: {videoId} to the playlist...");
                     var playlistItemInsertRequest = youtubeService.PlaylistItems.Insert(newPlaylistItem, "snippet");
