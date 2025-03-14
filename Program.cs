@@ -207,11 +207,14 @@ static class APIHelper
                 "upcoming" => SearchResource.ListRequest.EventTypeEnum.Upcoming,
                 _ => null
             };
-        
 
-            Console.WriteLine("Please enter the max results:");
-            Console.WriteLine("Press enter to skip:");
-            searchRequest.MaxResults = Int64.TryParse(Console.ReadLine(), out Int64 result) ? result : Random.Shared.NextInt64(0, Int64.MaxValue);
+            int DEFAULT_MAX_RESULTS = 50;
+            int DEFAULT_MIN_RESULTS = 0;
+            int DEFAULT_RESULTS = 5;
+
+            Console.WriteLine($"Please enter the max results[{DEFAULT_MIN_RESULTS}-{DEFAULT_MAX_RESULTS}]:");
+            Console.WriteLine($"Press enter to skip(default to {DEFAULT_RESULTS}):");
+            searchRequest.MaxResults = Int64.TryParse(Console.ReadLine(), out Int64 result) ? result : DEFAULT_RESULTS;
 
             SearchListResponse searchResponse = await searchRequest.ExecuteAsync();
             List<(string id,string description)> videoIds = new List<(string id,string description)>(searchResponse.Items.Count);
@@ -226,7 +229,7 @@ static class APIHelper
                     Console.WriteLine($"Video ID: {searchResult.Id.VideoId}");
                     Console.WriteLine($"Thumbnail: {searchResult.Snippet.Thumbnails.High.Url}");
                     Console.WriteLine($"Video URL: https://www.youtube.com/watch?v={searchResult.Id.VideoId}");
-
+                    Console.WriteLine($"Etag: {searchResult.ETag}");
                     Console.WriteLine();
                 }
                 else
@@ -258,7 +261,7 @@ static class APIHelper
                 {
                     Title = title,
                     Description = description,
-                    Tags = [tag, YouTubeService.Version, typeof(YouTubeService).Assembly.GetHashCode().ToString()],
+                    Tags = [tag, YouTubeService.Version, typeof(YouTubeService).Assembly.GetHashCode().ToString(), searchResponse.GetHashCode().ToString()],
                 };
 
                 Console.WriteLine("Please Enter the privacy status for the newplaylist (public, private, or unlisted):");
