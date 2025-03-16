@@ -4,14 +4,19 @@ using Google.Apis.Util.Store;
 using Google.Apis.YouTube.v3;
 using Google.Apis.YouTube.v3.Data;
 using System.Buffers.Text;
+using System.DirectoryServices;
+using System.DirectoryServices.Protocols;
 using System.Globalization;
 
 #if WINDOWS
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json;
+
 
 #endif
 using static Google.Apis.YouTube.v3.ChannelsResource;
+using SearchResult = Google.Apis.YouTube.v3.Data.SearchResult;
 
 
 
@@ -216,30 +221,38 @@ static class APIHelper
             Console.WriteLine($"Press enter to skip(default to {DEFAULT_RESULTS}):");
             searchRequest.MaxResults = Int64.TryParse(Console.ReadLine(), out Int64 result) ? result : DEFAULT_RESULTS;
 
-            SearchListResponse searchResponse = await searchRequest.ExecuteAsync();
-            List<(string id,string description)> videoIds = new List<(string id,string description)>(searchResponse.Items.Count);
-
-            foreach (SearchResult searchResult in searchResponse.Items)
+            List<(string id, string description)> videoIds = new List<(string id, string description)>();
+            string? searchVideoListResponsePaginatonToken = null;
+            List<string> responseHasheCodes = [];
+            do
             {
-                if (searchResult.Id.Kind == "youtube#video")
+                Console.WriteLine("Fetching videos...");
+                SearchListResponse searchResponse = await searchRequest.ExecuteAsync();
+                responseHasheCodes.Add(searchResponse.GetHashCode().ToString());
+                foreach (SearchResult searchResult in searchResponse.Items)
                 {
-                    videoIds.Add((searchResult.Id.VideoId, searchResult.Snippet.Description));
-                    Console.WriteLine($"Title: {searchResult.Snippet.Title}");
-                    Console.WriteLine($"Description: {searchResult.Snippet.Description}");
-                    Console.WriteLine($"Video ID: {searchResult.Id.VideoId}");
-                    Console.WriteLine($"Thumbnail: {searchResult.Snippet.Thumbnails.High.Url}");
-                    Console.WriteLine($"Video URL: https://www.youtube.com/watch?v={searchResult.Id.VideoId}");
-                    Console.WriteLine($"Etag: {searchResult.ETag}");
-                    Console.WriteLine();
+                    if (searchResult.Id.Kind == "youtube#video")
+                    {
+                        videoIds.Add((searchResult.Id.VideoId, searchResult.Snippet.Description));
+                        Console.WriteLine($"Title: {searchResult.Snippet.Title}");
+                        Console.WriteLine($"Description: {searchResult.Snippet.Description}");
+                        Console.WriteLine($"Video ID: {searchResult.Id.VideoId}");
+                        Console.WriteLine($"Thumbnail: {searchResult.Snippet.Thumbnails.High.Url}");
+                        Console.WriteLine($"Video URL: https://www.youtube.com/watch?v={searchResult.Id.VideoId}");
+                        Console.WriteLine($"Etag: {searchResult.ETag}");
+                        Console.WriteLine();
+                    }
+                    else
+                    {
+                        Console.WriteLine(searchResult.Id.Kind);
+                    }
                 }
-                else
-                {
-                    Console.WriteLine(searchResult.Id.Kind);
-                }
-            }
+                searchVideoListResponsePaginatonToken = searchResponse.NextPageToken;
+            } while(searchVideoListResponsePaginatonToken is not null); //assuming this is the next page token is properly set.
 
             Console.WriteLine("Would you like to create a playlist with these videos? (yes or no):");
-            string? createPlaylist = Console.ReadLine();
+            Console.WriteLine("Press enter to skip(default to yes):");
+            string? createPlaylist = Console.ReadLine() ?? string.Empty;
 
             string playlistId = "";
             if (createPlaylist == "yes")
@@ -261,7 +274,7 @@ static class APIHelper
                 {
                     Title = title,
                     Description = description,
-                    Tags = [tag, YouTubeService.Version, typeof(YouTubeService).Assembly.GetHashCode().ToString(), searchResponse.GetHashCode().ToString()],
+                    Tags = [tag, YouTubeService.Version, typeof(YouTubeService).Assembly.GetHashCode().ToString(), responseHasheCodes.GetHashCode().ToString()],
                 };
 
                 Console.WriteLine("Please Enter the privacy status for the newplaylist (public, private, or unlisted):");
@@ -297,19 +310,27 @@ static class APIHelper
                 Console.WriteLine("Press enter to fetch your playlist:");
                 searchListRequest.ForMine = true;
                 // Execute the search request
-                var searchListResponse = await searchListRequest.ExecuteAsync();
 
-                foreach (var searchResult in searchListResponse.Items)
+                string? searchListResponsePaginatonToken = null;
+                do
                 {
-                    if (searchResult.Snippet.Title.Equals(playlistName, StringComparison.OrdinalIgnoreCase))
+                    Stream searchListRequestExecutionStream = await searchListRequest.ExecuteAsStreamAsync();
+                    StreamReader reader = new StreamReader(searchListRequestExecutionStream);
+                    string jsonResponse = await reader.ReadToEndAsync();
+                    SearchListResponse? searchListResponse = JsonSerializer.Deserialize<SearchListResponse>(jsonResponse);
+                    foreach (SearchResult searchResult in searchListResponse?.Items ?? [])
                     {
-                        Console.WriteLine("Playlist found.");
-                        playlistId = searchResult.Id.PlaylistId;
-                        Console.WriteLine($"Playlist ID: {searchResult.Id.PlaylistId}");
-                        Console.WriteLine($"Playlist Title: {searchResult.Snippet.Title}");
-                        break;
+                        if (searchResult.Snippet.Title.Equals(playlistName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            Console.WriteLine("Playlist found.");
+                            playlistId = searchResult.Id.PlaylistId;
+                            Console.WriteLine($"Playlist ID: {searchResult.Id.PlaylistId}");
+                            Console.WriteLine($"Playlist Title: {searchResult.Snippet.Title}");
+                            break;
+                        }
                     }
-                }
+                    searchListResponsePaginatonToken = searchListResponse?.NextPageToken;
+                } while (searchListResponsePaginatonToken is not null); //assuming this is the next page token is properly set.
             }
             else
             {
