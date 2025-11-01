@@ -193,8 +193,9 @@ static class APIHelper
             //});
 
             // Fetch YouTube videos
+            Console.WriteLine("Fetching YouTube videos...");
             var searchRequest = youtubeService.Search.List("snippet");
-
+            searchRequest.Type = "video";
             Console.WriteLine("Please Enter the search query:");
             searchRequest.Q = Console.ReadLine(); // Replace with your search query
 
@@ -261,7 +262,7 @@ static class APIHelper
                 {
                     Title = title,
                     Description = description,
-                    Tags = [tag, YouTubeService.Version, typeof(YouTubeService).Assembly.GetHashCode().ToString(), searchResponse.GetHashCode().ToString()],
+                    Tags = [tag, YouTubeService.Version, typeof(YouTubeService).Assembly.GetHashCode().ToString(), searchResponse.GetHashCode().ToString(), newplaylist.ETag],
                 };
 
                 Console.WriteLine("Please Enter the privacy status for the newplaylist (public, private, or unlisted):");
