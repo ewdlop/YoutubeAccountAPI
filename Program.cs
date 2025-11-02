@@ -257,12 +257,17 @@ static class APIHelper
                 // Create a new playlist
 
                 Playlist newplaylist = new Playlist();
-
                 newplaylist.Snippet = new PlaylistSnippet
                 {
                     Title = title,
                     Description = description,
-                    Tags = [tag, YouTubeService.Version, typeof(YouTubeService).Assembly.GetHashCode().ToString(), searchResponse.GetHashCode().ToString(), newplaylist.ETag],
+                    Tags = [tag, YouTubeService.Version, 
+                        typeof(YouTubeService).Assembly.GetHashCode().ToString(), 
+                        searchResponse.GetHashCode().ToString(), 
+                        newplaylist.ETag,
+                        searchResponse.ETag,
+                        searchResponse.EventId
+                    ],
                 };
 
                 Console.WriteLine("Please Enter the privacy status for the newplaylist (public, private, or unlisted):");
