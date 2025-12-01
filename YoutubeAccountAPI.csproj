@@ -16,6 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Bogus" Version="35.6.2" />
+    <PackageReference Include="DotNetXtensions.Cryptography" Version="3.4.0" />
     <PackageReference Include="Google.Apis.YouTube.v3" Version="1.69.0.3707" />
     <PackageReference Include="Google.Cloud.Kms.Inventory.V1" Version="1.4.0" />
     <PackageReference Include="Lorem.Universal.Net" Version="4.0.80" />
